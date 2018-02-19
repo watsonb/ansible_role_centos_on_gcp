@@ -1,0 +1,61 @@
+---
+# tasks file for role_template
+
+- name: GCE | Ensure VMs (instances) exist
+  gce:
+    instance_names: "{{ gcp_instance_name }}"
+    zone: "{{ gcp_zone }}"
+    machine_type: "{{ gcp_machine_type }}"
+    image: "{{ gcp_image }}"
+    state: "{{ gcp_state }}"
+    disk_size: "{{ gcp_disk_size }}"
+    disk_auto_delete: "{{ gcp_disk_auto_delete }}"
+    network: "{{ gcp_network }}"
+    subnetwork: "{{ gcp_subnetwork }}"
+    preemptible: "{{ gcp_preemptible }}"
+    ip_forward: "{{ gcp_ip_forward }}"
+    metadata: "{{ gcp_metadata }}"
+    service_account_email: "{{ gcp_service_account_email }}"
+    credentials_file: "{{ gcp_credentials_file }}"
+    project_id: "{{ gcp_project_id }}"
+  delegate_to: 127.0.0.1
+  tags:
+    - gcp_vm
+  register: ret_val
+
+- debug:
+    var: ret_val
+    verbosity: 1
+  tags:
+    - gcp_vm
+
+- set_fact:
+    gce_inst_pub_ip: "{{ ret_val.instance_data[0].public_ip }}"
+  tags:
+    - gcp_vm
+
+- debug:
+    var: gce_inst_pub_ip
+    verbosity: 1
+  tags:
+    - gcp_vm
+
+- name: LINEINFILE | Update Ansible Controller's /etc/hosts to alias new machines
+  lineinfile:
+    path: /etc/hosts
+    line: '{{ gce_inst_pub_ip }}    {{ inventory_hostname }}'
+    state: present
+  become: true
+  with_items: ret_val.instance_data
+  delegate_to: 127.0.0.1
+  tags:
+    - gcp_vm
+
+- name: WAIT_FOR | Wait for SSH (port 22) on GCP VMs
+  delegate_to: 127.0.0.1
+  wait_for:
+    delay: 20
+    host: "{{ inventory_hostname }}"
+    port: 22
+    state: started
+    timeout: 240

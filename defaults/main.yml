@@ -1,0 +1,37 @@
+---
+#~~~~~
+# Zone project info
+#~~~~~
+gcp_zone: us-central1-f
+gcp_service_account_email: nobody@example.com
+gcp_credentials_file: /path/to/your/google_cloud_platform/credentials.json
+gcp_project_id: my-project
+
+#ideally, you'd pull in the above sensitive info from a vault, like this
+#gcp_service_account_email: "{{ vault_gcp_service_account_email }}"
+#gcp_credentials_file: "{{ vault_gcp_credentials_file }}"
+#gcp_project_id: "{{ vault_gcp_project_id }}"
+
+#~~~~~
+# Virtual network info
+#~~~~~
+gcp_net_name: my-gcp-net
+gcp_net_subnet_name: gcpnet
+
+#~~~~~
+# VM information
+#~~~~~
+
+gcp_instance_name: "{{ inventory_hostname }}"
+gcp_machine_type: n1-standard-1
+gcp_image: centos-7
+gcp_state: present
+gcp_disk_size: 100
+gcp_disk_auto_delete: true
+gcp_network: "{{ gcp_net_name }}"
+gcp_subnetwork: "{{ gcp_net_subnet_name }}"
+gcp_preemptible: false
+gcp_ip_forward: true
+gcp_startup_script: cat >> /etc/sudoers <<EOF ansible ALL=(ALL)     NOPASSWD:ALL EOF
+gcp_metadata: '{ "startup-script" : "{{ gcp_startup_script }}" }'
+gcp_instance_internal_ip_address: foo
